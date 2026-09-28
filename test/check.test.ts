@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { checkStellarToml } from "../src/check.js";
+import { formatGitHubAnnotation } from "../src/format.js";
 import { isFailure } from "../src/result.js";
 
 const valid = `VERSION = "2.7.0"
@@ -53,5 +54,17 @@ describe("checkStellarToml", () => {
     const warnings = [{ severity: "warning" as const, path: "VERSION", message: "Missing version." }];
     assert.equal(isFailure(warnings), false);
     assert.equal(isFailure(warnings, true), true);
+  });
+
+  it("escapes GitHub annotation properties and message data", () => {
+    const output = formatGitHubAnnotation({
+      severity: "error",
+      path: "CURRENCIES[0]:code",
+      message: "Invalid 100% value\nFix it.",
+    });
+    assert.equal(
+      output,
+      "::error title=stellar.toml CURRENCIES[0]%3Acode::Invalid 100%25 value%0AFix it.",
+    );
   });
 });
