@@ -1,0 +1,45 @@
+{
+  "name": "stellar-toml-check",
+  "version": "0.1.0",
+  "description": "A focused SEP-1 stellar.toml validator for local files and hosted endpoints.",
+  "type": "module",
+  "bin": {
+    "stellar-toml-check": "dist/src/cli.js"
+  },
+  "files": [
+    "dist/src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "pnpm build && node --test dist/test/**/*.test.js",
+    "lint": "eslint .",
+    "verify": "pnpm lint && pnpm check && pnpm test"
+  },
+  "keywords": [
+    "stellar",
+    "sep-1",
+    "toml",
+    "validator",
+    "cli"
+  ],
+  "author": "UUUpbeat",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/UUUpbeat/stellar-toml-check.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "smol-toml": "^1.4.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "@types/node": "^24.5.2",
+    "eslint": "^9.36.0",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.44.1"
+  }
+}

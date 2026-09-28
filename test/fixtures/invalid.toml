@@ -1,0 +1,10 @@
+VERSION = "2.7.0"
+WEB_AUTH_ENDPOINT = "http://example.com/auth"
+
+[[CURRENCIES]]
+code = "THIS-CODE-IS-TOO-LONG"
+issuer = "not-a-stellar-account"
+contract = "not-a-contract"
+display_decimals = 9
+fixed_number = 100
+max_number = 200
