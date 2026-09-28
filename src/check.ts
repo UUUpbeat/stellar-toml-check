@@ -107,6 +107,53 @@ function checkCurrencies(findings: Finding[], value: unknown): void {
   });
 }
 
+function checkValidators(findings: Finding[], value: unknown): void {
+  if (value === undefined) return;
+  if (!Array.isArray(value)) {
+    add(findings, "error", "VALIDATORS", "VALIDATORS must be an array of tables.");
+    return;
+  }
+
+  value.forEach((item, index) => {
+    const validator = record(item);
+    const base = `VALIDATORS[${index}]`;
+    if (!validator) {
+      add(findings, "error", base, "Validator entry must be a table.");
+      return;
+    }
+
+    if (validator.ALIAS === undefined) {
+      add(findings, "warning", `${base}.ALIAS`, "ALIAS helps identify the validator in quorum explorers.");
+    } else if (typeof validator.ALIAS !== "string" || !/^[a-z0-9-]{2,16}$/.test(validator.ALIAS)) {
+      add(findings, "error", `${base}.ALIAS`, "ALIAS must match ^[a-z0-9-]{2,16}$.");
+    }
+
+    if (validator.PUBLIC_KEY === undefined) {
+      add(findings, "warning", `${base}.PUBLIC_KEY`, "PUBLIC_KEY identifies the validator node.");
+    } else if (typeof validator.PUBLIC_KEY !== "string" || !STELLAR_PUBLIC_KEY.test(validator.PUBLIC_KEY)) {
+      add(findings, "error", `${base}.PUBLIC_KEY`, "PUBLIC_KEY must be a valid G-address.");
+    }
+
+    if (validator.HOST !== undefined) {
+      const match = typeof validator.HOST === "string"
+        ? /^(?:\[[^\]]+\]|[^:\s]+):(\d{1,5})$/.exec(validator.HOST)
+        : null;
+      const port = match ? Number(match[1]) : 0;
+      if (!match || port < 1 || port > 65535) {
+        add(findings, "error", `${base}.HOST`, "HOST must use host:port with a port from 1 to 65535.");
+      }
+    }
+
+    if (validator.HISTORY !== undefined) {
+      if (typeof validator.HISTORY !== "string") {
+        add(findings, "error", `${base}.HISTORY`, "HISTORY must be an absolute URI.");
+      } else if (!URL.canParse(validator.HISTORY)) {
+        add(findings, "error", `${base}.HISTORY`, "HISTORY must be an absolute URI.");
+      }
+    }
+  });
+}
+
 export function checkStellarToml(source: string): CheckResult {
   const findings: Finding[] = [];
   if (Buffer.byteLength(source, "utf8") > MAX_BYTES) {
@@ -146,5 +193,6 @@ export function checkStellarToml(source: string): CheckResult {
   if (documentation) checkHttps(findings, documentation, "ORG_URL", "DOCUMENTATION.ORG_URL");
 
   checkCurrencies(findings, document.CURRENCIES);
+  checkValidators(findings, document.VALIDATORS);
   return { findings, document };
 }

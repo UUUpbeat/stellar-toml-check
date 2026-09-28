@@ -67,4 +67,24 @@ describe("checkStellarToml", () => {
       "::error title=stellar.toml CURRENCIES[0]%3Acode::Invalid 100%25 value%0AFix it.",
     );
   });
+
+  it("validates SEP-1 validator identifiers and network locations", () => {
+    const result = checkStellarToml(`VERSION = "2.7.0"
+[[VALIDATORS]]
+ALIAS = "UPPERCASE"
+PUBLIC_KEY = "not-a-key"
+HOST = "node.example.com:99999"
+HISTORY = "not a uri"
+`);
+    assert.deepEqual(
+      result.findings.map((finding) => finding.path),
+      [
+        "VALIDATORS[0].ALIAS",
+        "VALIDATORS[0].PUBLIC_KEY",
+        "VALIDATORS[0].HOST",
+        "VALIDATORS[0].HISTORY",
+      ],
+    );
+    assert.ok(result.findings.every((finding) => finding.severity === "error"));
+  });
 });
