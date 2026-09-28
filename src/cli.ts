@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
 import { checkStellarToml, type Finding } from "./check.js";
+import { isFailure } from "./result.js";
 
 interface LoadedSource {
   body: string;
@@ -8,14 +9,15 @@ interface LoadedSource {
 }
 
 function usage(): void {
-  console.log(`stellar-toml-check [file-or-url] [--json]
+  console.log(`stellar-toml-check [file-or-url] [--json] [--strict]
 
 Validate a SEP-1 stellar.toml file. The source defaults to ./stellar.toml.
 
 Examples:
   stellar-toml-check
   stellar-toml-check ./public/.well-known/stellar.toml
-  stellar-toml-check https://example.com/.well-known/stellar.toml --json`);
+  stellar-toml-check https://example.com/.well-known/stellar.toml --json
+  stellar-toml-check ./stellar.toml --strict`);
 }
 
 async function load(source: string): Promise<LoadedSource> {
@@ -51,14 +53,16 @@ async function main(): Promise<void> {
     return;
   }
   const json = args.includes("--json");
+  const strict = args.includes("--strict");
   const source = args.find((arg) => !arg.startsWith("-")) ?? "stellar.toml";
 
   try {
     const loaded = await load(source);
     const result = checkStellarToml(loaded.body);
     const findings = [...loaded.transportFindings, ...result.findings];
+    const failed = isFailure(findings, strict);
     if (json) {
-      console.log(JSON.stringify({ source, valid: !findings.some((finding) => finding.severity === "error"), findings }, null, 2));
+      console.log(JSON.stringify({ source, valid: !failed, strict, findings }, null, 2));
     } else if (findings.length === 0) {
       console.log(`✓ ${source} passes the implemented SEP-1 checks.`);
     } else {
@@ -67,7 +71,7 @@ async function main(): Promise<void> {
         console.log(`${marker} ${finding.severity.toUpperCase()} ${finding.path}: ${finding.message}`);
       }
     }
-    process.exitCode = findings.some((finding) => finding.severity === "error") ? 1 : 0;
+    process.exitCode = failed ? 1 : 0;
   } catch (error) {
     console.error(`✗ Could not read ${source}: ${error instanceof Error ? error.message : String(error)}`);
     process.exitCode = 2;

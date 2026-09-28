@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { checkStellarToml } from "../src/check.js";
+import { isFailure } from "../src/result.js";
 
 const valid = `VERSION = "2.7.0"
 WEB_AUTH_ENDPOINT = "https://example.com/auth"
@@ -46,5 +47,11 @@ describe("checkStellarToml", () => {
     const result = checkStellarToml('VERSION = "2.7.0"\nBROKEN = [');
     assert.equal(result.findings[0]?.path, "$");
     assert.equal(result.findings[0]?.severity, "error");
+  });
+
+  it("only treats warnings as failures in strict mode", () => {
+    const warnings = [{ severity: "warning" as const, path: "VERSION", message: "Missing version." }];
+    assert.equal(isFailure(warnings), false);
+    assert.equal(isFailure(warnings, true), true);
   });
 });
