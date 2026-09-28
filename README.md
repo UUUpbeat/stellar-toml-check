@@ -20,10 +20,17 @@ pnpm install
 pnpm build
 node dist/src/cli.js ./stellar.toml
 node dist/src/cli.js https://example.com/.well-known/stellar.toml --json
+node dist/src/cli.js ./stellar.toml --github
 node dist/src/cli.js ./stellar.toml --strict
 ```
 
 Exit code `0` means no errors, `1` means validation errors were found, and `2` means the source could not be read. Pass `--strict` to make recommendations reported as warnings fail the check as well.
+
+Use `--github` inside GitHub Actions to turn findings into escaped workflow annotations that appear directly in the job summary and log:
+
+```yaml
+- run: node dist/src/cli.js ./public/.well-known/stellar.toml --github --strict
+```
 
 ## Development
 

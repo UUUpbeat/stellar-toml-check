@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
 import { checkStellarToml, type Finding } from "./check.js";
+import { formatGitHubAnnotation } from "./format.js";
 import { isFailure } from "./result.js";
 
 interface LoadedSource {
@@ -9,7 +10,7 @@ interface LoadedSource {
 }
 
 function usage(): void {
-  console.log(`stellar-toml-check [file-or-url] [--json] [--strict]
+  console.log(`stellar-toml-check [file-or-url] [--json | --github] [--strict]
 
 Validate a SEP-1 stellar.toml file. The source defaults to ./stellar.toml.
 
@@ -17,6 +18,7 @@ Examples:
   stellar-toml-check
   stellar-toml-check ./public/.well-known/stellar.toml
   stellar-toml-check https://example.com/.well-known/stellar.toml --json
+  stellar-toml-check ./stellar.toml --github
   stellar-toml-check ./stellar.toml --strict`);
 }
 
@@ -53,7 +55,13 @@ async function main(): Promise<void> {
     return;
   }
   const json = args.includes("--json");
+  const github = args.includes("--github");
   const strict = args.includes("--strict");
+  if (json && github) {
+    console.error("✗ Choose either --json or --github, not both.");
+    process.exitCode = 2;
+    return;
+  }
   const source = args.find((arg) => !arg.startsWith("-")) ?? "stellar.toml";
 
   try {
@@ -61,7 +69,9 @@ async function main(): Promise<void> {
     const result = checkStellarToml(loaded.body);
     const findings = [...loaded.transportFindings, ...result.findings];
     const failed = isFailure(findings, strict);
-    if (json) {
+    if (github) {
+      for (const finding of findings) console.log(formatGitHubAnnotation(finding));
+    } else if (json) {
       console.log(JSON.stringify({ source, valid: !failed, strict, findings }, null, 2));
     } else if (findings.length === 0) {
       console.log(`✓ ${source} passes the implemented SEP-1 checks.`);
