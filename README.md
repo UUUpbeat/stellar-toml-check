@@ -10,6 +10,7 @@ The project is intentionally narrow: it catches common configuration mistakes, p
 - HTTPS requirements for service endpoints
 - Stellar account and contract identifier shape
 - currency code, status, decimal, and issuance-policy rules
+- validator alias, public key, host, and history URI fields
 - hosted-file CORS and content-type headers
 - human-readable and JSON output with meaningful exit codes
 
